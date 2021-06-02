@@ -1,3 +1,5 @@
+from django.db.models.fields import URLField
+from bangazonapi.models.product import Product
 import json
 import datetime
 from rest_framework import status
@@ -96,5 +98,24 @@ class ProductTests(APITestCase):
         self.assertEqual(len(json_response), 3)
 
     # TODO: Delete product
+
+    def test_delete_product(self):
+
+        self.test_create_product()
+        
+       # Remove product 
+        url = "/products/1"
+        data = { "product_id": 1 }
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token)
+        response = self.client.delete(url, data, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+         # verify product was removed
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token)
+        response = self.client.get(url, None, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+       
 
     # TODO: Product can be rated. Assert average rating exists.
