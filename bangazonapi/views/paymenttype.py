@@ -56,6 +56,8 @@ class Payments(ViewSet):
             serializer = PaymentSerializer(
                 payment_type, context={'request': request})
             return Response(serializer.data)
+        except Payment.DoesNotExist as ex:
+            return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)    
         except Exception as ex:
             return HttpResponseServerError(ex)
 
@@ -81,10 +83,9 @@ class Payments(ViewSet):
         """Handle GET requests to payment type resource"""
         payment_types = Payment.objects.all()
 
-        customer_id = self.request.query_params.get('customer', None)
+        customer = Customer.objects.get(user=request.auth.user)
 
-        if customer_id is not None:
-            payment_types = payment_types.filter(customer__id=customer_id)
+        payment_types = payment_types.filter(customer=customer)
 
         serializer = PaymentSerializer(
             payment_types, many=True, context={'request': request})
