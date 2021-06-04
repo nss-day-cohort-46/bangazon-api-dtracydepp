@@ -113,7 +113,6 @@ class Products(ViewSet):
             return Response(serializer.data)
 
         except ValidationError as ex:
-
          return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
 
     def retrieve(self, request, pk=None):
