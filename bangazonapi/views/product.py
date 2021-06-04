@@ -4,6 +4,7 @@ from bangazonapi.models.recommendation import Recommendation
 import base64
 from django.core.files.base import ContentFile
 from django.http import HttpResponseServerError
+from django.core.exceptions import ValidationError
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import serializers
@@ -19,7 +20,7 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = ('id', 'name', 'price', 'number_sold', 'description',
                   'quantity', 'created_date', 'location', 'image_path',
-                  'average_rating', 'can_be_rated', )
+                  'average_rating', 'can_be_rated' )
         depth = 1
 
 
@@ -94,7 +95,7 @@ class Products(ViewSet):
         customer = Customer.objects.get(user=request.auth.user)
         new_product.customer = customer
 
-        product_category = ProductCategory.objects.get(pk=request.data["category_id"])
+        product_category = ProductCategory.objects.get(pk=request.data['category_id'])
         new_product.category = product_category
 
         if "image_path" in request.data:
@@ -104,12 +105,15 @@ class Products(ViewSet):
 
             new_product.image_path = data
 
-        new_product.save()
+        try:
+            new_product.save()
 
-        serializer = ProductSerializer(
+            serializer = ProductSerializer(
             new_product, context={'request': request})
+            return Response(serializer.data)
 
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except ValidationError as ex:
+         return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
 
     def retrieve(self, request, pk=None):
         """
